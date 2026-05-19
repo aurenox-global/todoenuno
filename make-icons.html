@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generador de iconos PWA – TodoenUNO</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #fff; display: flex; flex-direction: column; align-items: center; padding: 40px; gap: 24px; }
+    canvas { border-radius: 20px; }
+    button { background: #f5a623; color: #000; border: none; padding: 12px 28px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; }
+    button:hover { background: #e8941a; }
+    h2 { margin: 0; }
+  </style>
+</head>
+<body>
+  <h2>Generador de iconos PWA</h2>
+  <p>Haz clic en cada botón para descargar el icono correspondiente.</p>
+
+  <canvas id="c192" width="192" height="192"></canvas>
+  <button onclick="download(192)">⬇ Descargar icon-192.png</button>
+
+  <canvas id="c512" width="512" height="512"></canvas>
+  <button onclick="download(512)">⬇ Descargar icon-512.png</button>
+
+  <script>
+    function drawIcon(ctx, size) {
+      const r = size * 0.188; // corner radius
+      const s = size;
+
+      // Fondo redondeado
+      ctx.fillStyle = '#0a0a0f';
+      ctx.beginPath();
+      ctx.moveTo(r, 0);
+      ctx.lineTo(s - r, 0);
+      ctx.quadraticCurveTo(s, 0, s, r);
+      ctx.lineTo(s, s - r);
+      ctx.quadraticCurveTo(s, s, s - r, s);
+      ctx.lineTo(r, s);
+      ctx.quadraticCurveTo(0, s, 0, s - r);
+      ctx.lineTo(0, r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+      ctx.fill();
+
+      const sc = s / 512;
+      ctx.save();
+      ctx.scale(sc, sc);
+
+      const lw = 14;
+
+      // Bolsa – relleno semitransparente
+      ctx.beginPath();
+      ctx.moveTo(160, 200);
+      ctx.lineTo(352, 200);
+      ctx.lineTo(328, 344);
+      ctx.lineTo(184, 344);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(245,166,35,0.18)';
+      ctx.fill();
+
+      // Bolsa – contorno
+      ctx.strokeStyle = '#f5a623';
+      ctx.lineWidth = lw;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      // Asa de la bolsa
+      ctx.beginPath();
+      ctx.moveTo(208, 200);
+      ctx.bezierCurveTo(208, 170, 216, 128, 256, 128);
+      ctx.bezierCurveTo(296, 128, 304, 170, 304, 200);
+      ctx.strokeStyle = '#f5a623';
+      ctx.lineWidth = lw;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      // Lupa – círculo
+      ctx.beginPath();
+      ctx.arc(315, 168, 44, 0, Math.PI * 2);
+      ctx.strokeStyle = '#f5a623';
+      ctx.lineWidth = 16;
+      ctx.stroke();
+
+      // Lupa – palo
+      ctx.beginPath();
+      ctx.moveTo(347, 200);
+      ctx.lineTo(372, 225);
+      ctx.strokeStyle = '#f5a623';
+      ctx.lineWidth = 16;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    [192, 512].forEach(size => {
+      const canvas = document.getElementById('c' + size);
+      const ctx = canvas.getContext('2d');
+      drawIcon(ctx, size);
+    });
+
+    function download(size) {
+      const canvas = document.getElementById('c' + size);
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = `icon-${size}.png`;
+      a.click();
+    }
+  </script>
+</body>
+</html>
