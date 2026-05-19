@@ -1,6 +1,6 @@
 {
-  "name": "TodoenUNO - Buscador Multi-Tienda",
-  "short_name": "TodoenUNO",
+  "name": "TodoEnUNO",
+  "short_name": "TodoEnUNO",
   "description": "Busca en Amazon, AliExpress y Shein al mismo tiempo",
   "start_url": "./",
   "scope": "./",
