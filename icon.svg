@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fondo -->
+  <rect width="512" height="512" rx="96" fill="#0a0a0f"/>
+  <!-- Bolsa de compra -->
+  <path d="M160 200 h192 l-24 144 H184 Z" fill="#f5a623" opacity="0.15" stroke="#f5a623" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M208 200 c0-26 14-72 48-72 s48 46 48 72" fill="none" stroke="#f5a623" stroke-width="14" stroke-linecap="round"/>
+  <!-- Lupa encima -->
+  <circle cx="312" cy="168" r="44" fill="none" stroke="#f5a623" stroke-width="16"/>
+  <line x1="344" y1="200" x2="368" y2="224" stroke="#f5a623" stroke-width="16" stroke-linecap="round"/>
+</svg>
