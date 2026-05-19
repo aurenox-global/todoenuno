@@ -176,6 +176,31 @@
     /* Forzar ocultación aunque display:flex del .filter-toggle lo sobreescriba */
     .filter-toggle[hidden] { display: none !important; }
 
+    /* ─── LANG SWITCHER ──────────────────────────────────────── */
+    #lang-switcher {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+      margin-right: 6px;
+    }
+    .lang-btn {
+      background: none;
+      border: none;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 3px 5px;
+      border-radius: 4px;
+      transition: color 0.2s;
+      font-family: inherit;
+      line-height: 1;
+    }
+    .lang-btn:hover { color: var(--text-primary); }
+    .lang-btn.active { color: var(--accent); }
+    .lang-sep { color: var(--border); font-size: 10px; user-select: none; padding: 0 1px; }
+
     /* ─── HERO ──────────────────────────────────────────────────── */
     .hero {
       text-align: center;
@@ -977,9 +1002,16 @@
     <header>
       <a href="#" class="logo" aria-label="AffiliLink inicio">
         <div class="logo-icon">🔗</div>
-        <span class="logo-text">Todo<span>enUno</span></span>
+        <span class="logo-text">Todo<span>enUNO</span></span>
       </a>
       <div class="header-actions">
+        <div id="lang-switcher" aria-label="Idioma / Language / Sprache">
+          <button data-lang="es" type="button" class="lang-btn active">ES</button>
+          <span class="lang-sep" aria-hidden="true">·</span>
+          <button data-lang="en" type="button" class="lang-btn">EN</button>
+          <span class="lang-sep" aria-hidden="true">·</span>
+          <button data-lang="de" type="button" class="lang-btn">DE</button>
+        </div>
         <button class="btn-icon" id="theme-toggle" title="Cambiar a modo claro" aria-label="Cambiar modo claro/oscuro">🌙</button>
         <button class="btn-icon admin-btn" id="stats-toggle-header" title="Estadísticas" aria-label="Ver estadísticas">📊</button>
         <button class="btn-icon admin-btn" id="config-btn" title="Configurar IDs de afiliado" aria-label="Configuración">⚙️</button>
@@ -990,9 +1022,9 @@
   <!-- ─── HERO ────────────────────────────────────────────────────── -->
   <div class="container">
     <section class="hero">
-      <div class="hero-eyebrow">🛒 3 tiendas · 1 búsqueda · 100% Seguro</div>
-      <h1 class="hero-title">Busca en todo</h1>
-      <p class="hero-subtitle">Encuentra productos en Amazon, AliExpress y Shein al mismo tiempo.</p>
+      <div class="hero-eyebrow" data-i18n="eyebrow">🛒 3 tiendas · 1 búsqueda · 100% Seguro</div>
+      <h1 class="hero-title" data-i18n="heroTitle">Busca en todo</h1>
+      <p class="hero-subtitle" data-i18n="heroSubtitle">Encuentra productos en Amazon, AliExpress y Shein al mismo tiempo.</p>
 
       <div class="search-wrapper">
         <div class="search-bar">
@@ -1005,7 +1037,7 @@
             spellcheck="false"
             aria-label="Término de búsqueda"
           />
-          <button id="search-btn" type="button">Buscar</button>
+          <button id="search-btn" data-i18n="searchBtn" type="button">Buscar</button>
         </div>
         <div class="autocomplete-dropdown" id="autocomplete" role="listbox" aria-label="Búsquedas recientes"></div>
       </div>
@@ -1018,7 +1050,7 @@
   <!-- ─── STORE FILTERS ────────────────────────────────────────────── -->
   <div class="container">
     <div class="filters-section" role="group" aria-label="Filtrar tiendas">
-      <span class="filters-label">Tiendas:</span>
+      <span class="filters-label" data-i18n="storesLabel">Tiendas:</span>
 
       <label class="filter-toggle active" style="--store-color: var(--amazon)" id="filter-amazon_de">
         <input type="checkbox" value="amazon_de" checked aria-label="Amazon.de" />
@@ -1050,10 +1082,10 @@
   <!-- ─── SORT ───────────────────────────────────────────────────── -->
   <div class="container">
     <div class="sort-section" role="group" aria-label="Ordenar resultados">
-      <span class="sort-label">Ordenar:</span>
-      <button class="sort-btn active" data-sort="default" type="button">Relevancia</button>
-      <button class="sort-btn" data-sort="bestseller" type="button">🔥 Más vendidos</button>
-      <button class="sort-btn" data-sort="price_asc" type="button">💰 Menor precio</button>
+      <span class="sort-label" data-i18n="sortLabel">Ordenar:</span>
+      <button class="sort-btn active" data-sort="default" data-i18n="sortDefault" type="button">Relevancia</button>
+      <button class="sort-btn" data-sort="bestseller" data-i18n="sortBest" type="button">🔥 Más vendidos</button>
+      <button class="sort-btn" data-sort="price_asc" data-i18n="sortPrice" type="button">💰 Menor precio</button>
     </div>
   </div>
 
@@ -1063,7 +1095,7 @@
       <div class="results-header">
         <p class="results-query" id="results-query"></p>
         <button id="open-all-btn" type="button">
-          <span>🚀</span> Abrir todas
+          <span>🚀</span> <span data-i18n="openAll">Abrir todas</span>
         </button>
       </div>
       <div id="results-grid" role="list"></div>
@@ -1074,13 +1106,13 @@
   <div class="container admin-section">
     <div class="stats-section">
       <button class="stats-toggle-btn" id="stats-toggle-btn" aria-expanded="false" aria-controls="stats-panel">
-        <span>📈</span> Mis estadísticas de clics
+        <span>📈</span> <span data-i18n="statsBtn">Mis estadísticas de clics</span>
         <span class="chevron" aria-hidden="true">▾</span>
       </button>
       <div id="stats-panel" role="region" aria-label="Estadísticas de clics">
-        <p class="stats-title">Clics por tienda (acumulado)</p>
+        <p class="stats-title" data-i18n="statsTitle">Clics por tienda (acumulado)</p>
         <div class="stats-grid" id="stats-grid"></div>
-        <button class="stats-reset" id="stats-reset" type="button">Resetear estadísticas</button>
+        <button class="stats-reset" id="stats-reset" data-i18n="statsReset" type="button">Resetear estadísticas</button>
       </div>
     </div>
   </div>
@@ -1089,7 +1121,7 @@
   <div class="container">
     <footer>
       <p>
-        <strong style="color:var(--text-dim)">TODOENUNO</strong> — Buscador multi-tienda con seguridad.<br />
+        <strong style="color:var(--text-dim)">TodoenUNO</strong> — <span data-i18n="footer">Buscador multi-tienda con seguridad.</span><br />
       </p>
     </footer>
   </div>
@@ -1248,6 +1280,107 @@
       sheinRef: "4674030518",
       sheinDomain: "www.shein.com",
     };
+
+    /* ================================================================
+       IDIOMAS
+    ================================================================ */
+    const TRANSLATIONS = {
+      es: {
+        title: 'Buscador Multi-Tienda',
+        eyebrow: '🛍️ 3 tiendas · 1 búsqueda · 100% Seguro',
+        heroTitle: 'Busca en todo',
+        heroSubtitle: 'Encuentra productos en Amazon, AliExpress y Shein al mismo tiempo.',
+        searchPlaceholder: 'ej: auriculares inalámbricos, vestido verano…',
+        searchBtn: 'Buscar',
+        storesLabel: 'Tiendas:',
+        sortLabel: 'Ordenar:',
+        sortDefault: 'Relevancia',
+        sortBest: '🔥 Más vendidos',
+        sortPrice: '💰 Menor precio',
+        openAll: 'Abrir todas',
+        resultsFor: (term, n) => `Resultados para <strong>"${term}"</strong> en ${n} tienda${n > 1 ? 's' : ''}`,
+        statsBtn: 'Mis estadísticas de clics',
+        statsTitle: 'Clics por tienda (acumulado)',
+        statsReset: 'Resetear estadísticas',
+        footer: 'Buscador multi-tienda con seguridad.',
+        cardBadge: '💰 Mejor precio',
+        cardInfo: (term, store) => `Se abrirá la búsqueda de <strong>"${term}"</strong> en ${store}.`,
+        cardCta: (emoji, store) => `${emoji} Ver en ${store} →`,
+      },
+      en: {
+        title: 'Multi-Store Search',
+        eyebrow: '🛍️ 3 stores · 1 search · 100% Secure',
+        heroTitle: 'Search everything',
+        heroSubtitle: 'Find products on Amazon, AliExpress and Shein at the same time.',
+        searchPlaceholder: 'e.g. wireless headphones, summer dress…',
+        searchBtn: 'Search',
+        storesLabel: 'Stores:',
+        sortLabel: 'Sort:',
+        sortDefault: 'Relevance',
+        sortBest: '🔥 Best sellers',
+        sortPrice: '💰 Lowest price',
+        openAll: 'Open all',
+        resultsFor: (term, n) => `Results for <strong>"${term}"</strong> in ${n} store${n > 1 ? 's' : ''}`,
+        statsBtn: 'My click statistics',
+        statsTitle: 'Clicks by store (total)',
+        statsReset: 'Reset statistics',
+        footer: 'Multi-store search, secure.',
+        cardBadge: '💰 Best price',
+        cardInfo: (term, store) => `Search results for <strong>"${term}"</strong> will open in ${store}.`,
+        cardCta: (emoji, store) => `${emoji} View on ${store} →`,
+      },
+      de: {
+        title: 'Multi-Shop-Suche',
+        eyebrow: '🛍️ 3 Shops · 1 Suche · 100% Sicher',
+        heroTitle: 'Überall suchen',
+        heroSubtitle: 'Finde Produkte auf Amazon, AliExpress und Shein gleichzeitig.',
+        searchPlaceholder: 'z.B. kabellose Kopfhörer, Sommerkleid…',
+        searchBtn: 'Suchen',
+        storesLabel: 'Shops:',
+        sortLabel: 'Sortieren:',
+        sortDefault: 'Relevanz',
+        sortBest: '🔥 Bestseller',
+        sortPrice: '💰 Günstigster Preis',
+        openAll: 'Alle öffnen',
+        resultsFor: (term, n) => `Ergebnisse für <strong>"${term}"</strong> in ${n} Shop${n > 1 ? 's' : ''}`,
+        statsBtn: 'Meine Klickstatistiken',
+        statsTitle: 'Klicks pro Shop (gesamt)',
+        statsReset: 'Statistiken zurücksetzen',
+        footer: 'Multi-Shop-Suche, sicher.',
+        cardBadge: '💰 Bester Preis',
+        cardInfo: (term, store) => `Die Suchergebnisse für <strong>"${term}"</strong> werden in ${store} geöffnet.`,
+        cardCta: (emoji, store) => `${emoji} Auf ${store} ansehen →`,
+      },
+    };
+
+    let currentLang = 'es'; // sobreescrito en init
+
+    function t(key) {
+      return (TRANSLATIONS[currentLang] || TRANSLATIONS.es)[key];
+    }
+
+    function detectLang() {
+      const saved = lsGet('lang');
+      if (saved && TRANSLATIONS[saved]) return saved;
+      const nav = (navigator.language || 'es').toLowerCase().slice(0, 2);
+      return TRANSLATIONS[nav] ? nav : 'es';
+    }
+
+    function applyLang(lang) {
+      currentLang = lang;
+      lsSet('lang', lang);
+      document.documentElement.lang = lang;
+      document.title = t('title');
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const val = t(el.dataset.i18n);
+        if (typeof val === 'string') el.textContent = val;
+      });
+      const inp = document.getElementById('search-input');
+      if (inp) inp.placeholder = t('searchPlaceholder');
+      document.querySelectorAll('.lang-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.lang === lang);
+      });
+    }
 
     /* ================================================================
        TIENDAS — Metadatos de cada tienda
@@ -1583,7 +1716,7 @@
 
       // Header de resultados
       document.getElementById('results-query').innerHTML =
-        `Resultados para <strong>"${escapeHtml(term)}"</strong> en ${activeStores.length} tienda${activeStores.length > 1 ? 's' : ''}`;
+        t('resultsFor')(escapeHtml(term), activeStores.length);
 
       // Construir tarjetas
       const grid = document.getElementById('results-grid');
@@ -1623,13 +1756,13 @@
             <div class="store-logo-circle" aria-hidden="true">${store.emoji}</div>
             <span class="store-name">${escapeHtml(store.name)}</span>
           </div>
-          <span class="affiliate-badge">💰 Mejor precio</span>
+          <span class="affiliate-badge">${escapeHtml(t('cardBadge'))}</span>
         </div>
         <p class="card-info">
-          Se abrirá la búsqueda de <strong>"${escapeHtml(term)}"</strong> en ${escapeHtml(store.name)}.
+          ${t('cardInfo')(escapeHtml(term), escapeHtml(store.name))}
         </p>
         <div class="card-cta">
-          ${store.emoji} Ver en ${escapeHtml(store.name)} →
+          ${t('cardCta')(store.emoji, escapeHtml(store.name))}
         </div>
       `;
 
@@ -1844,9 +1977,17 @@
     /* ================================================================
        INIT
     ================================================================ */
+    /* Idioma inicial */
+    currentLang = detectLang();
+    applyLang(currentLang);
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => applyLang(btn.dataset.lang));
+    });
+
     renderRecentSearches();
     renderStats();
 
   </script>
 </body>
 </html>
+
