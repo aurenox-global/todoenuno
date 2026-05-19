@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<!--
+╔══════════════════════════════════════════════════════════════════╗
+║                        AffiliLink                               ║
+║              Buscador Multi-Tienda con Links Afiliado           ║
+╠══════════════════════════════════════════════════════════════════╣
+║  INSTRUCCIONES DE CONFIGURACIÓN                                 ║
+║                                                                  ║
+║  1. Abre este archivo en un editor de texto.                    ║
+║  2. Localiza el objeto CONFIG en el bloque <script>.            ║
+║  3. Reemplaza los valores de ejemplo con tus IDs reales:        ║
+║                                                                  ║
+║     amazonDomain  → Tu región: amazon.es / amazon.com /         ║
+║                     amazon.com.mx / amazon.co.uk                ║
+║     amazonTag     → Tu ID de asociado Amazon (ej: mitag-21)     ║
+║                                                                  ║
+║     aliexpressTraceKey → Tu trace key del panel AliExpress      ║
+║                          Portals (Admitad / programa propio)    ║
+║                                                                  ║
+║     temuToken     → Tu token de afiliado Temu (Impact /        ║
+║                     programa propio de Temu)                    ║
+║                                                                  ║
+║     sheinRef      → Tu ID de afiliado Shein (Awin / Impact /   ║
+║                     ACCESSTRADE)                                ║
+║     sheinDomain   → es.shein.com / shein.com / fr.shein.com     ║
+║                                                                  ║
+║  4. Aloja el archivo en GitHub Pages, Netlify o Vercel          ║
+║     (hosting estático gratuito). ¡Sin backend necesario!        ║
+║                                                                  ║
+║  AVISO: Las URLs de afiliado de AliExpress, Temu y Shein       ║
+║  varían según la red que uses. Revisa el formato exacto en      ║
+║  tu panel de afiliados y ajusta las funciones buildURL()        ║
+║  en el bloque JS si es necesario.                               ║
+╚══════════════════════════════════════════════════════════════════╝
+-->
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buscador Multi-Tienda</title>
+  <meta name="description" content="Busca productos en Amazon, AliExpress, Temu y Shein al mismo tiempo con tus links de afiliado." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── VARIABLES ─────────────────────────────────────────────── */
+    :root {
+      --bg-base:      #0a0a0f;
+      --bg-surface:   #12121a;
+      --bg-card:      #16161f;
+      --bg-glass:     rgba(22, 22, 31, 0.75);
+      --border:       rgba(255,255,255,0.07);
+      --border-light: rgba(255,255,255,0.12);
+      --text-primary: #f0f0f8;
+      --text-muted:   #6b6b82;
+      --text-dim:     #9898b0;
+      --accent:       #f5a623;
+      --accent-dim:   rgba(245,166,35,0.15);
+      --amazon:       #FF9900;
+      --aliexpress:   #E62B0A;
+      --temu:         #17A55E;
+      --shein:        #CC0066;
+      --radius-sm:    8px;
+      --radius-md:    14px;
+      --radius-lg:    20px;
+      --shadow-glow:  0 0 40px rgba(245,166,35,0.08);
+    }
+
+    /* ─── LIGHT THEME ───────────────────────────────────────────── */
+    [data-theme="light"] {
+      --bg-base:      #f4f4fa;
+      --bg-surface:   #ffffff;
+      --bg-card:      #ececf4;
+      --border:       rgba(0,0,0,0.08);
+      --border-light: rgba(0,0,0,0.14);
+      --text-primary: #0c0c18;
+      --text-muted:   #888898;
+      --text-dim:     #55556a;
+      --accent-dim:   rgba(245,166,35,0.12);
+    }
+
+    [data-theme="light"] body::before { opacity: 0.12; }
+
+    [data-theme="light"] body::after {
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(245,166,35,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(245,166,35,0.05) 0%, transparent 60%);
+    }
+
+    /* ─── RESET ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ─── NOISE TEXTURE OVERLAY ─────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.6;
+    }
+
+    /* ─── MESH GRADIENT ─────────────────────────────────────────── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(245,166,35,0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(245,166,35,0.03) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── LAYOUT WRAPPER ────────────────────────────────────────── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── HEADER ────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 0 20px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), #e8941a);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 15px rgba(245,166,35,0.3);
+    }
+
+    .logo-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      letter-spacing: 1px;
+      color: var(--text-primary);
+    }
+
+    .logo-text span { color: var(--accent); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-icon {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* Botones de admin — ocultos por defecto; clic ×5 en el logo para revelar */
+    .admin-btn { display: none; }
+    .admin-mode .admin-btn { display: flex; }
+
+    /* Secciones de admin — ocultas por defecto */
+    .admin-section { display: none !important; }
+    .admin-mode .admin-section { display: block !important; }
+
+    /* Forzar ocultación aunque display:flex del .filter-toggle lo sobreescriba */
+    .filter-toggle[hidden] { display: none !important; }
+
+    /* ─── HERO ──────────────────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 64px 0 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(245,166,35,0.2);
+      border-radius: 100px;
+      padding: 6px 16px;
+      margin-bottom: 24px;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 8vw, 96px);
+      line-height: 0.95;
+      letter-spacing: 2px;
+      margin-bottom: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #9898b0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 17px;
+      color: var(--text-dim);
+      max-width: 480px;
+      margin: 0 auto 40px;
+      font-weight: 400;
+    }
+
+    /* ─── SEARCH BAR ────────────────────────────────────────────── */
+    .search-wrapper {
+      position: relative;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border-light);
+      border-radius: 100px;
+      overflow: hidden;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .search-bar:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(245,166,35,0.12), var(--shadow-glow);
+    }
+
+    .search-icon {
+      padding: 0 18px 0 22px;
+      font-size: 20px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+
+    .search-bar:focus-within .search-icon { color: var(--accent); }
+
+    #search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 17px;
+      padding: 18px 0;
+      caret-color: var(--accent);
+    }
+
+    #search-input::placeholder { color: var(--text-muted); }
+
+    #search-btn {
+      background: linear-gradient(135deg, var(--accent), #e8941a);
+      border: none;
+      color: #0a0a0f;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px 28px;
+      margin: 5px;
+      border-radius: 100px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: 0.3px;
+    }
+
+    #search-btn:hover { opacity: 0.88; transform: scale(1.02); }
+    #search-btn:active { transform: scale(0.98); }
+
+    /* ─── AUTOCOMPLETE DROPDOWN ─────────────────────────────────── */
+    .autocomplete-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    }
+
+    .autocomplete-dropdown.visible { display: block; }
+
+    .autocomplete-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-dim);
+      transition: background 0.15s;
+    }
+
+    .autocomplete-item:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); }
+    .autocomplete-item .icon { font-size: 12px; opacity: 0.5; }
+
+    /* ─── RECENT SEARCHES ───────────────────────────────────────── */
+    #recent-searches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+      min-height: 34px;
+    }
+
+    .recent-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .recent-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .recent-chip-delete {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: 11px;
+      line-height: 1;
+      padding: 0 0 0 2px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s;
+      pointer-events: none;
+    }
+
+    .recent-chip:hover .recent-chip-delete {
+      opacity: 0.6;
+      pointer-events: auto;
+    }
+
+    .recent-chip-delete:hover { opacity: 1 !important; }
+
+    /* ─── SORT CONTROLS ────────────────────────────────────────── */
+    .sort-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 0 20px;
+      flex-wrap: wrap;
+    }
+
+    .sort-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .sort-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .sort-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .sort-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ─── STORE FILTERS ─────────────────────────────────────────── */
+    .filters-section {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 32px 0 8px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .filters-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .filter-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      user-select: none;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 7px 14px 7px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dim);
+      transition: all 0.2s;
+    }
+
+    .filter-toggle input { display: none; }
+
+    .filter-toggle .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+
+    .filter-toggle.active {
+      border-color: var(--store-color, var(--accent));
+      color: var(--text-primary);
+      background: color-mix(in srgb, var(--store-color, var(--accent)) 12%, transparent);
+    }
+
+    .filter-toggle.active .dot { background: var(--store-color, var(--accent)); }
+
+    /* ─── RESULTS SECTION ───────────────────────────────────────── */
+    .results-section {
+      padding: 16px 0 20px;
+      position: relative;
+      z-index: 1;
+      display: none;
+    }
+
+    .results-section.visible { display: block; }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .results-query {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .results-query strong { color: var(--accent); }
+
+    #open-all-btn {
+      background: transparent;
+      border: 1.5px solid var(--accent);
+      color: var(--accent);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 22px;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #open-all-btn:hover {
+      background: var(--accent-dim);
+      box-shadow: 0 0 20px rgba(245,166,35,0.15);
+    }
+
+    /* ─── STORE CARDS GRID ──────────────────────────────────────── */
+    #results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      #results-grid { grid-template-columns: 1fr; }
+    }
+
+    .store-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .store-card.animate-in {
+      animation: cardEnter 0.45s ease forwards;
+    }
+
+    .store-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      border-color: var(--store-color);
+      box-shadow:
+        0 8px 40px rgba(0,0,0,0.4),
+        0 0 30px color-mix(in srgb, var(--store-color) 15%, transparent);
+    }
+
+    .store-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--store-color);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .store-card:hover::before { opacity: 1; }
+
+    /* Decorative corner glow */
+    .store-card::after {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, color-mix(in srgb, var(--store-color) 8%, transparent) 0%, transparent 70%);
+      pointer-events: none;
+      transition: opacity 0.3s;
+      opacity: 0;
+    }
+
+    .store-card:hover::after { opacity: 1; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .store-name-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .store-logo-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      background: color-mix(in srgb, var(--store-color) 15%, #1a1a24);
+      border: 1px solid color-mix(in srgb, var(--store-color) 30%, transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .store-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 1px;
+      color: var(--store-color);
+    }
+
+    .affiliate-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(245,166,35,0.2);
+      border-radius: 100px;
+      padding: 4px 10px;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
+    .card-info {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .card-info strong { color: var(--text-dim); }
+
+    .card-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: color-mix(in srgb, var(--store-color) 12%, #1e1e28);
+      border: 1.5px solid color-mix(in srgb, var(--store-color) 40%, transparent);
+      border-radius: var(--radius-md);
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--store-color);
+      transition: background 0.2s, box-shadow 0.2s;
+      margin-top: auto;
+    }
+
+    .store-card:hover .card-cta {
+      background: color-mix(in srgb, var(--store-color) 20%, #1e1e28);
+      box-shadow: 0 4px 20px color-mix(in srgb, var(--store-color) 20%, transparent);
+    }
+
+    /* ─── KEYFRAME ANIMATIONS ───────────────────────────────────── */
+    @keyframes cardEnter {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ─── STATS PANEL ───────────────────────────────────────────── */
+    .stats-section {
+      position: relative;
+      z-index: 1;
+      margin: 8px 0 32px;
+    }
+
+    .stats-toggle-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 0;
+      transition: color 0.2s;
+    }
+
+    .stats-toggle-btn:hover { color: var(--text-dim); }
+
+    .stats-toggle-btn .chevron {
+      display: inline-block;
+      transition: transform 0.25s;
+    }
+
+    .stats-toggle-btn.open .chevron { transform: rotate(180deg); }
+
+    #stats-panel {
+      display: none;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-top: 10px;
+      animation: fadeInDown 0.2s ease;
+    }
+
+    #stats-panel.visible { display: block; }
+
+    .stats-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stat-store {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-dim);
+    }
+
+    .stat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--store-color);
+    }
+
+    .stat-count {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: var(--store-color);
+      letter-spacing: 1px;
+    }
+
+    .stats-reset {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 14px;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      transition: color 0.2s;
+    }
+
+    .stats-reset:hover { color: var(--aliexpress); }
+
+    /* ─── CONFIG MODAL ──────────────────────────────────────────── */
+    #config-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #config-overlay.visible { display: flex; }
+
+    #config-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      animation: fadeInDown 0.25s ease;
+    }
+
+    .config-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .config-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    .config-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .config-close:hover {
+      border-color: var(--aliexpress);
+      color: var(--aliexpress);
+    }
+
+    .config-group {
+      margin-bottom: 28px;
+    }
+
+    .config-group-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--store-color, var(--accent));
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .config-field {
+      margin-bottom: 14px;
+    }
+
+    .config-field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    .config-field input,
+    .config-field select {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .config-field input:focus,
+    .config-field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,166,35,0.1);
+    }
+
+    .config-field select option { background: var(--bg-surface); }
+
+    .config-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+
+    .config-save-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), #e8941a);
+      border: none;
+      color: #0a0a0f;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 4px;
+    }
+
+    .config-save-btn:hover { opacity: 0.88; }
+
+    .config-saved-msg {
+      text-align: center;
+      font-size: 13px;
+      color: var(--temu);
+      margin-top: 12px;
+      min-height: 18px;
+      transition: opacity 0.3s;
+    }
+
+    /* ─── FOOTER ────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      margin-top: 40px;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* ─── SCROLLBAR ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* ─── RESPONSIVE ────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .hero { padding: 40px 0 28px; }
+      .results-header { flex-direction: column; align-items: flex-start; }
+      #config-panel { padding: 24px 18px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── HEADER ──────────────────────────────────────────────────── -->
+  <div class="container">
+    <header>
+      <a href="#" class="logo" aria-label="AffiliLink inicio">
+        <div class="logo-icon">🔗</div>
+        <span class="logo-text">Tres<span>unLink</span></span>
+      </a>
+      <div class="header-actions">
+        <button class="btn-icon" id="theme-toggle" title="Cambiar a modo claro" aria-label="Cambiar modo claro/oscuro">🌙</button>
+        <button class="btn-icon admin-btn" id="stats-toggle-header" title="Estadísticas" aria-label="Ver estadísticas">📊</button>
+        <button class="btn-icon admin-btn" id="config-btn" title="Configurar IDs de afiliado" aria-label="Configuración">⚙️</button>
+      </div>
+    </header>
+  </div>
+
+  <!-- ─── HERO ────────────────────────────────────────────────────── -->
+  <div class="container">
+    <section class="hero">
+      <div class="hero-eyebrow">🛒 3 tiendas · 1 búsqueda · 100% Seguro</div>
+      <h1 class="hero-title">Busca en todo</h1>
+      <p class="hero-subtitle">Encuentra productos en Amazon, AliExpress, Temu y Shein al mismo tiempo.</p>
+
+      <div class="search-wrapper">
+        <div class="search-bar">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="ej: auriculares inalámbricos, vestido verano..."
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Término de búsqueda"
+          />
+          <button id="search-btn" type="button">Buscar</button>
+        </div>
+        <div class="autocomplete-dropdown" id="autocomplete" role="listbox" aria-label="Búsquedas recientes"></div>
+      </div>
+
+      <!-- Recent searches chips -->
+      <div id="recent-searches" role="list" aria-label="Búsquedas recientes"></div>
+    </section>
+  </div>
+
+  <!-- ─── STORE FILTERS ────────────────────────────────────────────── -->
+  <div class="container">
+    <div class="filters-section" role="group" aria-label="Filtrar tiendas">
+      <span class="filters-label">Tiendas:</span>
+
+      <label class="filter-toggle active" style="--store-color: var(--amazon)" id="filter-amazon_de">
+        <input type="checkbox" value="amazon_de" checked aria-label="Amazon.de" />
+        <span class="dot"></span> Amazon.de
+      </label>
+
+      <label class="filter-toggle active" style="--store-color: #e88a00" id="filter-amazon_us">
+        <input type="checkbox" value="amazon_us" checked aria-label="Amazon.com" />
+        <span class="dot"></span> Amazon.com
+      </label>
+
+      <label class="filter-toggle active" style="--store-color: var(--aliexpress)" id="filter-aliexpress">
+        <input type="checkbox" value="aliexpress" checked aria-label="AliExpress" />
+        <span class="dot"></span> AliExpress
+      </label>
+
+      <label class="filter-toggle active" style="--store-color: var(--temu)" id="filter-temu" hidden>
+        <input type="checkbox" value="temu" checked aria-label="Temu" />
+        <span class="dot"></span> Temu
+      </label>
+
+      <label class="filter-toggle active" style="--store-color: var(--shein)" id="filter-shein">
+        <input type="checkbox" value="shein" checked aria-label="Shein" />
+        <span class="dot"></span> Shein
+      </label>
+    </div>
+  </div>
+
+  <!-- ─── SORT ───────────────────────────────────────────────────── -->
+  <div class="container">
+    <div class="sort-section" role="group" aria-label="Ordenar resultados">
+      <span class="sort-label">Ordenar:</span>
+      <button class="sort-btn active" data-sort="default" type="button">Relevancia</button>
+      <button class="sort-btn" data-sort="bestseller" type="button">🔥 Más vendidos</button>
+      <button class="sort-btn" data-sort="price_asc" type="button">💰 Menor precio</button>
+    </div>
+  </div>
+
+  <!-- ─── RESULTS ──────────────────────────────────────────────────── -->
+  <div class="container">
+    <section class="results-section" id="results-section" aria-live="polite">
+      <div class="results-header">
+        <p class="results-query" id="results-query"></p>
+        <button id="open-all-btn" type="button">
+          <span>🚀</span> Abrir todas
+        </button>
+      </div>
+      <div id="results-grid" role="list"></div>
+    </section>
+  </div>
+
+  <!-- ─── STATS PANEL (solo admin) ─────────────────────────────────── -->
+  <div class="container admin-section">
+    <div class="stats-section">
+      <button class="stats-toggle-btn" id="stats-toggle-btn" aria-expanded="false" aria-controls="stats-panel">
+        <span>📈</span> Mis estadísticas de clics
+        <span class="chevron" aria-hidden="true">▾</span>
+      </button>
+      <div id="stats-panel" role="region" aria-label="Estadísticas de clics">
+        <p class="stats-title">Clics por tienda (acumulado)</p>
+        <div class="stats-grid" id="stats-grid"></div>
+        <button class="stats-reset" id="stats-reset" type="button">Resetear estadísticas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── FOOTER ───────────────────────────────────────────────────── -->
+  <div class="container">
+    <footer>
+      <p>
+        <strong style="color:var(--text-dim)">TresunliLink</strong> — Buscador multi-tienda con seguridad.<br />
+      </p>
+    </footer>
+  </div>
+
+  <!-- ─── CONFIG MODAL ────────────────────────────────────────────── -->
+  <div id="config-overlay" role="dialog" aria-modal="true" aria-labelledby="config-title">
+    <div id="config-panel">
+      <button class="config-close" id="config-close" aria-label="Cerrar configuración">✕</button>
+
+      <h2 class="config-title" id="config-title">⚙️ Configuración</h2>
+      <p class="config-subtitle">
+        Pega aquí tus IDs de afiliado. Se guardan localmente en tu navegador y tienen prioridad sobre los valores del código.
+      </p>
+
+      <!-- Amazon DE -->
+      <div class="config-group">
+        <div class="config-group-title" style="--store-color: var(--amazon)">
+          🟠 Amazon Alemania
+        </div>
+        <div class="config-field">
+          <label for="cfg-amazon-domain-de">Dominio</label>
+          <select id="cfg-amazon-domain-de">
+            <option value="amazon.de">amazon.de (Alemania)</option>
+            <option value="amazon.es">amazon.es (España)</option>
+            <option value="amazon.co.uk">amazon.co.uk (Reino Unido)</option>
+            <option value="amazon.fr">amazon.fr (Francia)</option>
+            <option value="amazon.it">amazon.it (Italia)</option>
+          </select>
+        </div>
+        <div class="config-field">
+          <label for="cfg-amazon-tag-de">ID de Asociado (tag)</label>
+          <input type="text" id="cfg-amazon-tag-de" placeholder="ej: phonestats-21" />
+          <p class="config-hint">Associates Central DE → "ID de seguimiento".</p>
+        </div>
+      </div>
+
+      <!-- Amazon US -->
+      <div class="config-group">
+        <div class="config-group-title" style="--store-color: #e88a00">
+          🇺🇸 Amazon Estados Unidos
+        </div>
+        <div class="config-field">
+          <label for="cfg-amazon-domain-us">Dominio</label>
+          <select id="cfg-amazon-domain-us">
+            <option value="amazon.com">amazon.com (EE.UU.)</option>
+            <option value="amazon.com.mx">amazon.com.mx (México)</option>
+          </select>
+        </div>
+        <div class="config-field">
+          <label for="cfg-amazon-tag-us">ID de Asociado (tag)</label>
+          <input type="text" id="cfg-amazon-tag-us" placeholder="ej: phonestats07-20" />
+          <p class="config-hint">Associates Central US → "Tracking ID".</p>
+        </div>
+      </div>
+
+      <!-- AliExpress -->
+      <div class="config-group">
+        <div class="config-group-title" style="--store-color: var(--aliexpress)">
+          🔴 AliExpress
+        </div>
+        <div class="config-field">
+          <label for="cfg-ali-key">Trace Key / ID de afiliado</label>
+          <input type="text" id="cfg-ali-key" placeholder="ej: _dXxXxXx..." />
+          <p class="config-hint">
+            Del panel <strong>AliExpress Portals</strong> (Admitad/programa propio). En "Generar link", copia el parámetro <code>aff_trace_key</code> de tu URL base.<br />
+            Redes: Admitad → usa <code>aff_trace_key</code>. CJ Affiliate → adapta la URL en el JS.
+          </p>
+        </div>
+      </div>
+
+      <!-- Temu -->
+      <div class="config-group" hidden>
+        <div class="config-group-title" style="--store-color: var(--temu)">
+          🟢 Temu
+        </div>
+        <div class="config-field">
+          <label for="cfg-temu-token">Enlace de referidos</label>
+          <input type="text" id="cfg-temu-token" placeholder="ej: https://temu.to/k/..." />
+          <p class="config-hint">
+            Pega tu link de referidos de Temu. El card no busca el término directamente — el usuario llega a Temu a través de tu referido y la comisión queda registrada.
+          </p>
+        </div>
+      </div>
+
+      <!-- Shein -->
+      <div class="config-group">
+        <div class="config-group-title" style="--store-color: var(--shein)">
+          👗 Shein
+        </div>
+        <div class="config-field">
+          <label for="cfg-shein-domain">Dominio regional</label>
+          <select id="cfg-shein-domain">
+            <option value="es.shein.com">es.shein.com (España)</option>
+            <option value="www.shein.com">www.shein.com (Global)</option>
+            <option value="fr.shein.com">fr.shein.com (Francia)</option>
+            <option value="de.shein.com">de.shein.com (Alemania)</option>
+            <option value="shein.com.mx">shein.com.mx (México)</option>
+          </select>
+        </div>
+        <div class="config-field">
+          <label for="cfg-shein-ref">ID de afiliado / ref</label>
+          <input type="text" id="cfg-shein-ref" placeholder="ej: affiliate123" />
+          <p class="config-hint">
+            Depende de tu red: <strong>Awin</strong> → usa el parámetro <code>awinaffid</code>. <strong>Impact</strong> → usa tu <code>ref</code>. <strong>ACCESSTRADE</strong> → usa el token de tracking de tu URL base.<br />
+            Si tienes un link completo de afiliado de Shein, úsalo como base y añade <code>&q=TERMINO</code> al final.
+          </p>
+        </div>
+      </div>
+
+      <button class="config-save-btn" id="config-save" type="button">💾 Guardar configuración</button>
+      <p class="config-saved-msg" id="config-saved-msg"></p>
+    </div>
+  </div>
+
+
+  <!-- ─── JAVASCRIPT ───────────────────────────────────────────────── -->
+  <script>
+    'use strict';
+
+    /* Tema — aplicar antes de renderizar para evitar flash */
+    (function() {
+      try {
+        const t = localStorage.getItem('theme') || 'dark';
+        if (t === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch(_) {}
+    })();
+
+    /* ================================================================
+       CONFIGURACIÓN PRINCIPAL
+       Edita estos valores con tus IDs de afiliado reales.
+       Los valores guardados en localStorage tienen prioridad.
+    ================================================================ */
+    const CONFIG = {
+      // ── Amazon Alemania ─────────────────────────────────────────
+      amazonDomainDE: "amazon.de",
+      amazonTagDE: "phonestats-21",
+
+      // ── Amazon Estados Unidos ───────────────────────────────────
+      amazonDomainUS: "amazon.com",
+      amazonTagUS: "phonestats07-20",
+
+      // ── AliExpress ──────────────────────────────────────────────
+      // FORMATO URL: https://www.aliexpress.com/wholesale?SearchText=TERM&aff_trace_key=TU_KEY
+      // Si usas Admitad u otra red, ajusta buildAliexpressURL() más abajo.
+      aliexpressTraceKey: "phone_stats_de",
+
+      // ── Temu ────────────────────────────────────────────────────
+      // Link de referidos: el card abre Temu con el referral trackeado.
+      // No permite búsqueda directa por término (link corto de redirección).
+      temuToken: "https://temu.to/k/enttephnrum",
+
+      // ── Shein ───────────────────────────────────────────────────
+      // FORMATO URL: https://DOMINIO/pdsearch/TERM/?ici=s1&ref=TU_REF
+      // Redes compatibles: Awin (usa awinaffid), Impact (usa ref/subid), ACCESSTRADE.
+      // Pendiente: añadir tu ref cuando lo tengas.
+      sheinRef: "4674030518",
+      sheinDomain: "www.shein.com",
+    };
+
+    /* ================================================================
+       TIENDAS — Metadatos de cada tienda
+    ================================================================ */
+    const STORES = [
+      {
+        id: 'amazon_de',
+        name: 'Amazon.de',
+        emoji: '📦',
+        color: '#FF9900',
+        buildURL: buildAmazonDeURL,
+      },
+      {
+        id: 'amazon_us',
+        name: 'Amazon.com',
+        emoji: '🇺🇸',
+        color: '#e88a00',
+        buildURL: buildAmazonUsURL,
+      },
+      {
+        id: 'aliexpress',
+        name: 'AliExpress',
+        emoji: '🛍️',
+        color: '#E62B0A',
+        buildURL: buildAliexpressURL,
+      },
+      {
+        id: 'temu',
+        name: 'Temu',
+        emoji: '🛒',
+        color: '#17A55E',
+        buildURL: buildTemuURL,
+        enabled: false,
+      },
+      {
+        id: 'shein',
+        name: 'Shein',
+        emoji: '👗',
+        color: '#CC0066',
+        buildURL: buildSheinURL,
+      },
+    ];
+
+    /* Ordenación activa: 'default' | 'bestseller' | 'price_asc' */
+    let currentSort = 'default';
+
+    /* ================================================================
+       GENERADORES DE URL DE AFILIADO
+       Modifica estas funciones si tu red de afiliados usa un
+       formato de URL diferente al documentado.
+    ================================================================ */
+
+    function buildAmazonDeURL(term) {
+      const cfg = getConfig();
+      const encoded = encodeURIComponent(term);
+      const sortMap = { bestseller: 'salesrank', price_asc: 'price-asc-rank' };
+      const sortParam = sortMap[currentSort] ? `&sort=${sortMap[currentSort]}` : '';
+      return `https://www.${cfg.amazonDomainDE}/s?k=${encoded}&tag=${cfg.amazonTagDE}${sortParam}`;
+    }
+
+    function buildAmazonUsURL(term) {
+      const cfg = getConfig();
+      const encoded = encodeURIComponent(term);
+      const sortMap = { bestseller: 'salesrank', price_asc: 'price-asc-rank' };
+      const sortParam = sortMap[currentSort] ? `&sort=${sortMap[currentSort]}` : '';
+      return `https://www.${cfg.amazonDomainUS}/s?k=${encoded}&tag=${cfg.amazonTagUS}${sortParam}`;
+    }
+
+    function buildAliexpressURL(term) {
+      const cfg = getConfig();
+      const encoded = encodeURIComponent(term);
+      // ─── OPCIÓN A (Portals / Admitad): aff_trace_key ───────────
+      // return `https://www.aliexpress.com/wholesale?SearchText=${encoded}&aff_trace_key=${cfg.aliexpressTraceKey}`;
+      //
+      // ─── OPCIÓN B (enlace corto s.click): ──────────────────────
+      // return `https://s.click.aliexpress.com/e/${cfg.aliexpressTraceKey}?SearchText=${encoded}`;
+      //
+      // ─── OPCIÓN C (CJ Affiliate / otras redes): ────────────────
+      // Construye la URL base de tu red y añade el term de búsqueda
+      //
+      // Por defecto usamos Opción A:
+      const sortMap = { bestseller: 'total_transat_desc', price_asc: 'price_asc' };
+      const sortParam = sortMap[currentSort] ? `&SortType=${sortMap[currentSort]}` : '';
+      return `https://www.aliexpress.com/wholesale?SearchText=${encoded}&aff_trace_key=${cfg.aliexpressTraceKey}&aff_platform=portals-tool${sortParam}`;
+    }
+
+    function buildTemuURL(term) {
+      const cfg = getConfig();
+      const encoded = encodeURIComponent(term);
+      // ─── OPCIÓN A (programa propio Temu): ──────────────────────
+      return `https://www.temu.com/search_result.html?search_key=${encoded}&refer_page_name=affiliate&refer_page_id=${cfg.temuToken}`;
+      //
+      // ─── OPCIÓN B (Impact Radius): ─────────────────────────────
+      // El link de Impact suele ser: https://temu.sjv.io/c/TU_ID/...
+      // No se puede parametrizar directamente; usa la URL base del panel de Impact
+      // y concatena el term como parámetro personalizado o subid.
+    }
+
+    function buildSheinURL(term) {
+      const cfg = getConfig();
+      const encoded = encodeURIComponent(term);
+      // ─── OPCIÓN A (Awin): ───────────────────────────────────────
+      // return `https://www.awin1.com/cread.php?awinaffid=${cfg.sheinRef}&awinmid=XXXXXXXX&ued=https%3A%2F%2F${cfg.sheinDomain}%2Fpdsearch%2F${encoded}%2F`;
+      //
+      // ─── OPCIÓN B (link directo con ref): ───────────────────────
+      const sortMap = { bestseller: '7', price_asc: '3' };
+      const sortParam = sortMap[currentSort] ? `&sort=${sortMap[currentSort]}` : '';
+      return `https://${cfg.sheinDomain}/pdsearch/${encoded}/?ici=s1&ref=${cfg.sheinRef}&utm_source=affiliate&utm_medium=${cfg.sheinRef}${sortParam}`;
+      //
+      // ─── OPCIÓN C (Impact): ─────────────────────────────────────
+      // return `https://shein.prf.hn/click/camref:${cfg.sheinRef}/destination:https://${cfg.sheinDomain}/pdsearch/${encoded}/`;
+    }
+
+    /* ================================================================
+       localStorage — WRAPPER CON FALLBACK EN MEMORIA
+    ================================================================ */
+    const memoryFallback = {};
+
+    function lsGet(key, fallback = null) {
+      try {
+        const val = localStorage.getItem(key);
+        return val !== null ? val : fallback;
+      } catch (_) {
+        return key in memoryFallback ? memoryFallback[key] : fallback;
+      }
+    }
+
+    function lsSet(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (_) {
+        memoryFallback[key] = value;
+      }
+    }
+
+    function lsRemove(key) {
+      try {
+        localStorage.removeItem(key);
+      } catch (_) {
+        delete memoryFallback[key];
+      }
+    }
+
+    /* ================================================================
+       CONFIGURACIÓN — merge localStorage + CONFIG defaults
+    ================================================================ */
+    function getConfig() {
+      return {
+        amazonDomainDE:     lsGet('cfg_amazonDomainDE',     CONFIG.amazonDomainDE),
+        amazonTagDE:        lsGet('cfg_amazonTagDE',         CONFIG.amazonTagDE),
+        amazonDomainUS:     lsGet('cfg_amazonDomainUS',     CONFIG.amazonDomainUS),
+        amazonTagUS:        lsGet('cfg_amazonTagUS',         CONFIG.amazonTagUS),
+        aliexpressTraceKey: lsGet('cfg_aliexpressTraceKey', CONFIG.aliexpressTraceKey),
+        temuToken:          lsGet('cfg_temuToken',           CONFIG.temuToken),
+        sheinRef:           lsGet('cfg_sheinRef',            CONFIG.sheinRef),
+        sheinDomain:        lsGet('cfg_sheinDomain',         CONFIG.sheinDomain),
+      };
+    }
+
+    function saveConfig(data) {
+      Object.entries(data).forEach(([k, v]) => lsSet('cfg_' + k, v));
+    }
+
+    /* ================================================================
+       HISTORIAL DE BÚSQUEDAS
+    ================================================================ */
+    const MAX_HISTORY = 10;
+
+    function getHistory() {
+      try {
+        return JSON.parse(lsGet('search_history', '[]'));
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function addToHistory(term) {
+      if (!term.trim()) return;
+      let history = getHistory().filter(h => h.toLowerCase() !== term.toLowerCase());
+      history.unshift(term);
+      if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+      lsSet('search_history', JSON.stringify(history));
+    }
+
+    /* ================================================================
+       ESTADÍSTICAS DE CLICS
+    ================================================================ */
+    function getStats() {
+      try {
+        return JSON.parse(lsGet('click_stats', '{}'));
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function incrementStat(storeId) {
+      const stats = getStats();
+      stats[storeId] = (stats[storeId] || 0) + 1;
+      lsSet('click_stats', JSON.stringify(stats));
+      renderStats();
+    }
+
+    function renderStats() {
+      const stats = getStats();
+      const grid = document.getElementById('stats-grid');
+      grid.innerHTML = '';
+
+      STORES.forEach(store => {
+        const count = stats[store.id] || 0;
+        const item = document.createElement('div');
+        item.className = 'stat-item';
+        item.innerHTML = `
+          <div class="stat-store">
+            <div class="stat-dot" style="background:${store.color}"></div>
+            <span>${store.name}</span>
+          </div>
+          <span class="stat-count" style="color:${store.color}">${count}</span>
+        `;
+        grid.appendChild(item);
+      });
+    }
+
+    /* ================================================================
+       RECENT SEARCHES — chips en el hero
+    ================================================================ */
+    function renderRecentSearches() {
+      const container = document.getElementById('recent-searches');
+      container.innerHTML = '';
+      const history = getHistory();
+      if (!history.length) return;
+
+      history.slice(0, 6).forEach(term => {
+        const chip = document.createElement('div');
+        chip.className = 'recent-chip';
+        chip.setAttribute('role', 'listitem');
+        chip.innerHTML = `
+          <span aria-hidden="true">🕐</span>
+          <span class="chip-label">${escapeHtml(term)}</span>
+          <button class="recent-chip-delete" aria-label="Eliminar búsqueda: ${escapeAttr(term)}" type="button">✕</button>
+        `;
+        chip.querySelector('.chip-label').addEventListener('click', () => {
+          document.getElementById('search-input').value = term;
+          performSearch(term);
+        });
+        chip.querySelector('.chip-label').style.cursor = 'pointer';
+        chip.querySelector('.recent-chip-delete').addEventListener('click', e => {
+          e.stopPropagation();
+          let h = getHistory().filter(x => x.toLowerCase() !== term.toLowerCase());
+          lsSet('search_history', JSON.stringify(h));
+          renderRecentSearches();
+        });
+        container.appendChild(chip);
+      });
+    }
+
+    /* ================================================================
+       AUTOCOMPLETE DROPDOWN
+    ================================================================ */
+    const autocompleteEl = document.getElementById('autocomplete');
+    let autocompleteActive = false;
+
+    function showAutocomplete(query) {
+      const history = getHistory();
+      const matches = query.trim()
+        ? history.filter(h => h.toLowerCase().includes(query.toLowerCase()))
+        : history;
+
+      if (!matches.length) {
+        hideAutocomplete();
+        return;
+      }
+
+      autocompleteEl.innerHTML = matches.slice(0, 6).map(m =>
+        `<div class="autocomplete-item" role="option" tabindex="-1" data-value="${escapeAttr(m)}">
+          <span class="icon">🕐</span> ${escapeHtml(m)}
+        </div>`
+      ).join('');
+
+      autocompleteEl.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('mousedown', e => {
+          e.preventDefault();
+          const val = item.dataset.value;
+          document.getElementById('search-input').value = val;
+          hideAutocomplete();
+          performSearch(val);
+        });
+      });
+
+      autocompleteEl.classList.add('visible');
+      autocompleteActive = true;
+    }
+
+    function hideAutocomplete() {
+      autocompleteEl.classList.remove('visible');
+      autocompleteActive = false;
+    }
+
+    /* ================================================================
+       STORE FILTERS
+    ================================================================ */
+    function getActiveStores() {
+      return STORES.filter(store => {
+        if (store.enabled === false) return false;
+        const cb = document.querySelector(`#filter-${store.id} input`);
+        return cb && cb.checked;
+      });
+    }
+
+    document.querySelectorAll('.filter-toggle').forEach(label => {
+      const cb = label.querySelector('input');
+      cb.addEventListener('change', () => {
+        label.classList.toggle('active', cb.checked);
+      });
+    });
+
+    /* ================================================================
+       BÚSQUEDA PRINCIPAL
+    ================================================================ */
+    function performSearch(rawTerm) {
+      const term = rawTerm.trim();
+      if (!term) return;
+
+      hideAutocomplete();
+      addToHistory(term);
+      renderRecentSearches();
+
+      const activeStores = getActiveStores();
+      if (!activeStores.length) return;
+
+      // Mostrar sección de resultados
+      const section = document.getElementById('results-section');
+      section.classList.add('visible');
+
+      // Header de resultados
+      document.getElementById('results-query').innerHTML =
+        `Resultados para <strong>"${escapeHtml(term)}"</strong> en ${activeStores.length} tienda${activeStores.length > 1 ? 's' : ''}`;
+
+      // Construir tarjetas
+      const grid = document.getElementById('results-grid');
+      grid.innerHTML = '';
+
+      activeStores.forEach((store, idx) => {
+        const url = store.buildURL(term);
+        const card = buildStoreCard(store, term, url);
+        card.style.animationDelay = `${idx * 100}ms`;
+        grid.appendChild(card);
+        // Trigger animation en el siguiente frame
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => card.classList.add('animate-in'));
+        });
+      });
+
+      // Scroll suave hacia resultados en móvil
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    /* ================================================================
+       CONSTRUIR TARJETA DE TIENDA
+    ================================================================ */
+    function buildStoreCard(store, term, url) {
+      const card = document.createElement('a');
+      card.href = url;
+      card.target = '_blank';
+      card.rel = 'noopener noreferrer';
+      card.className = 'store-card';
+      card.setAttribute('role', 'listitem');
+      card.style.setProperty('--store-color', store.color);
+      card.setAttribute('aria-label', `Ver "${term}" en ${store.name}`);
+
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="store-name-block">
+            <div class="store-logo-circle" aria-hidden="true">${store.emoji}</div>
+            <span class="store-name">${escapeHtml(store.name)}</span>
+          </div>
+          <span class="affiliate-badge">💰 Mejor precio</span>
+        </div>
+        <p class="card-info">
+          Se abrirá la búsqueda de <strong>"${escapeHtml(term)}"</strong> en ${escapeHtml(store.name)}.
+        </p>
+        <div class="card-cta">
+          ${store.emoji} Ver en ${escapeHtml(store.name)} →
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        incrementStat(store.id);
+      });
+
+      return card;
+    }
+
+    /* ================================================================
+       ABRIR TODAS LAS TIENDAS
+    ================================================================ */
+    document.getElementById('open-all-btn').addEventListener('click', () => {
+      const term = document.getElementById('search-input').value.trim();
+      if (!term) return;
+      const activeStores = getActiveStores();
+      activeStores.forEach(store => {
+        const url = store.buildURL(term);
+        const win = window.open(url, '_blank', 'noopener,noreferrer');
+        if (win) win.opener = null;
+        incrementStat(store.id);
+      });
+    });
+
+    /* ================================================================
+       EVENTOS DE BÚSQUEDA
+    ================================================================ */
+    const searchInput = document.getElementById('search-input');
+
+    document.getElementById('search-btn').addEventListener('click', () => {
+      performSearch(searchInput.value);
+    });
+
+    searchInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        performSearch(searchInput.value);
+      } else if (e.key === 'Escape') {
+        hideAutocomplete();
+      }
+    });
+
+    searchInput.addEventListener('input', () => {
+      showAutocomplete(searchInput.value);
+    });
+
+    // Botones de ordenación
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentSort = btn.dataset.sort;
+        const q = searchInput.value.trim();
+        if (q) performSearch(q);
+      });
+    });
+
+    searchInput.addEventListener('focus', () => {
+      if (getHistory().length) showAutocomplete(searchInput.value);
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.search-wrapper')) hideAutocomplete();
+    });
+
+    /* ================================================================
+       PANEL DE ESTADÍSTICAS
+    ================================================================ */
+    const statsPanel = document.getElementById('stats-panel');
+    const statsToggleBtn = document.getElementById('stats-toggle-btn');
+    const statsToggleHeader = document.getElementById('stats-toggle-header');
+
+    function toggleStats() {
+      const isOpen = statsPanel.classList.toggle('visible');
+      statsToggleBtn.classList.toggle('open', isOpen);
+      statsToggleBtn.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) renderStats();
+    }
+
+    statsToggleBtn.addEventListener('click', toggleStats);
+    statsToggleHeader.addEventListener('click', () => {
+      toggleStats();
+      document.querySelector('.stats-section').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    document.getElementById('stats-reset').addEventListener('click', () => {
+      lsRemove('click_stats');
+      renderStats();
+    });
+
+    /* ================================================================
+       PANEL DE CONFIGURACIÓN
+    ================================================================ */
+    const configOverlay = document.getElementById('config-overlay');
+
+    function openConfig() {
+      const cfg = getConfig();
+      Array.from(document.getElementById('cfg-amazon-domain-de').options).forEach(opt => {
+        opt.selected = opt.value === cfg.amazonDomainDE;
+      });
+      document.getElementById('cfg-amazon-tag-de').value  = cfg.amazonTagDE;
+      Array.from(document.getElementById('cfg-amazon-domain-us').options).forEach(opt => {
+        opt.selected = opt.value === cfg.amazonDomainUS;
+      });
+      document.getElementById('cfg-amazon-tag-us').value  = cfg.amazonTagUS;
+      document.getElementById('cfg-ali-key').value        = cfg.aliexpressTraceKey !== 'TU_TRACE_KEY_ALIEXPRESS' ? cfg.aliexpressTraceKey : '';
+      document.getElementById('cfg-temu-token').value     = cfg.temuToken !== 'TU_TOKEN_TEMU' ? cfg.temuToken : '';
+      document.getElementById('cfg-shein-ref').value      = cfg.sheinRef !== 'TU_REF_SHEIN' ? cfg.sheinRef : '';
+      Array.from(document.getElementById('cfg-shein-domain').options).forEach(opt => {
+        opt.selected = opt.value === cfg.sheinDomain;
+      });
+      document.getElementById('config-saved-msg').textContent = '';
+      configOverlay.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeConfig() {
+      configOverlay.classList.remove('visible');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('config-btn').addEventListener('click', openConfig);
+    document.getElementById('config-close').addEventListener('click', closeConfig);
+
+    configOverlay.addEventListener('click', e => {
+      if (e.target === configOverlay) closeConfig();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && configOverlay.classList.contains('visible')) closeConfig();
+    });
+
+    document.getElementById('config-save').addEventListener('click', () => {
+      const data = {
+        amazonDomainDE:     document.getElementById('cfg-amazon-domain-de').value,
+        amazonTagDE:        document.getElementById('cfg-amazon-tag-de').value.trim() || CONFIG.amazonTagDE,
+        amazonDomainUS:     document.getElementById('cfg-amazon-domain-us').value,
+        amazonTagUS:        document.getElementById('cfg-amazon-tag-us').value.trim() || CONFIG.amazonTagUS,
+        aliexpressTraceKey: document.getElementById('cfg-ali-key').value.trim()       || CONFIG.aliexpressTraceKey,
+        temuToken:          document.getElementById('cfg-temu-token').value.trim()    || CONFIG.temuToken,
+        sheinRef:           document.getElementById('cfg-shein-ref').value.trim()     || CONFIG.sheinRef,
+        sheinDomain:        document.getElementById('cfg-shein-domain').value,
+      };
+      saveConfig(data);
+      const msg = document.getElementById('config-saved-msg');
+      msg.textContent = '✓ Configuración guardada correctamente';
+      setTimeout(() => { msg.textContent = ''; }, 3000);
+    });
+
+    /* ================================================================
+       HELPERS — Seguridad: escapar antes de insertar en el DOM
+    ================================================================ */
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeAttr(str) {
+      return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    /* ================================================================
+       TEMA CLARO / OSCURO
+    ================================================================ */
+    const themeToggleBtn = document.getElementById('theme-toggle');
+
+    function applyTheme(mode) {
+      if (mode === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeToggleBtn.textContent = '☀️';
+        themeToggleBtn.setAttribute('title', 'Cambiar a modo oscuro');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+        themeToggleBtn.textContent = '🌙';
+        themeToggleBtn.setAttribute('title', 'Cambiar a modo claro');
+      }
+      lsSet('theme', mode);
+    }
+
+    // Sincronizar icono con el tema ya aplicado por el IIFE
+    if (document.documentElement.getAttribute('data-theme') === 'light') {
+      themeToggleBtn.textContent = '☀️';
+      themeToggleBtn.setAttribute('title', 'Cambiar a modo oscuro');
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      applyTheme(isLight ? 'dark' : 'light');
+    });
+
+    /* ================================================================
+       ACCESO SECRETO ADMIN — clic ×5 en el logo para revelar controles
+    ================================================================ */
+    let adminClicks = 0;
+    let adminTimer;
+
+    document.querySelector('.logo').addEventListener('click', e => {
+      e.preventDefault();
+      adminClicks++;
+      clearTimeout(adminTimer);
+      adminTimer = setTimeout(() => { adminClicks = 0; }, 2000);
+      if (adminClicks >= 5) {
+        adminClicks = 0;
+        document.body.classList.toggle('admin-mode');
+      }
+    });
+
+    /* ================================================================
+       INIT
+    ================================================================ */
+    renderRecentSearches();
+    renderStats();
+
+  </script>
+</body>
+</html>
